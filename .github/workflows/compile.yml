@@ -1,0 +1,48 @@
+name: Build DirtyFrag Application
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Descargar el código fuente del repositorio
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    # 2. Configurar el entorno de Java (necesario para Gradle y herramientas de Android)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+        cache: 'gradle'
+
+    # 3. Configurar Android SDK y NDK
+    - name: Set up Android SDK & NDK
+      uses: nttld/setup-android-ndk@v1
+      with:
+        # Instala las herramientas de compilación y la versión del NDK que necesites
+        # Puedes cambiar '25.2.9519653' por la versión exacta que requiera DirtyFrag
+        ndk-version: r30
+
+    # 4. Conceder permisos de ejecución al script de Gradle wrapper
+    - name: Grant Execute Permission to Gradlew
+      run: chmod +x ./gradlew
+
+    # 5. Compilar la aplicación con Gradle (Genera el APK o Bundle)
+    - name: Build with Gradle
+      run: ./gradlew assembleRelease
+
+    # 6. Guardar el archivo APK resultante como un artefacto de GitHub
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: DirtyFrag-Release-APK
+        path: app/build/outputs/apk/release/*.apk
